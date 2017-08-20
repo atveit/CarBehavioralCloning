@@ -115,7 +115,9 @@ Partially related: Used also balancing of data sets in the generator, see sample
 
 ```
 
-The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track. See mp4 file in this github repository.
+The model was tested by running it through the simulator and ensuring
+that the vehicle could stay on the track. See modelthatworked.mp4 file
+in this github repository.
 
 ####3. Model parameter tuning
 
@@ -123,8 +125,12 @@ The model used an adam optimizer, so the learning rate was not tuned manually
 
 ####4. Appropriate training data
 
-Used the training data that was provided as part of the project, and in addition added two runs of data to avoid problems (e.g. curve without lane line on the right side - until the bridge started and also a separate training set driving on the bridge). Data is available on https://amundtveit.com/DATA0.tgz). 
-###Model Architecture and Training Strategy
+Used the training data that was provided as part of the project, and
+in addition added two runs of data to avoid problems (e.g. curve
+without lane line on the right side - until the bridge started and
+also a separate training set driving on the bridge). Data is available
+on https://amundtveit.com/DATA0.tgz).  ###Model Architecture and
+Training Strategy
 
 ####1. Solution Design Approach
 
