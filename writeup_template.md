@@ -67,8 +67,11 @@ Used the NVIDIA Autopilot Deep Learning model for self-driving as inspiration (r
 8. Used dropout in later layers to avoid overfitting
 9. Used l1 regularization on the final layer, since I've seen that it is good for regression problems (better than l2)
 
+Image of Model
 ![model Image][model]
 
+Detailed model
+```
 _________________________________________________________________
 Layer (type)                 Output Shape              Param #   
 =================================================================
@@ -109,7 +112,7 @@ dense_5 (Dense)              (None, 1)                 11
 Total params: 524,731
 Trainable params: 524,611
 Non-trainable params: 120
-
+```
 
 
 ####2. Attempts to reduce overfitting in the model
