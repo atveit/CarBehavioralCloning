@@ -19,23 +19,11 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [model]: model.png "Model Visualization"
-[image2]: ./examples/placeholder.png "Grayscaling"
-[image3]: ./examples/placeholder_small.png "Recovery Image"
-[image4]: ./examples/placeholder_small.png "Recovery Image"
-[image5]: ./examples/placeholder_small.png "Recovery Image"
-[image6]: ./examples/placeholder_small.png "Normal Image"
-[image7]: ./examples/placeholder_small.png "Flipped Image"
-
-## Rubric Points
-###Here I will consider the [rubric points](https://review.udacity.com/#!/rubrics/432/view) individually and describe how I addressed each point in my implementation.  
-
----
-###Files Submitted & Code Quality
 
 ####1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
 My project includes the following files:
-* model.py containing the script to create and train the model
+* train_car_to_drive.ipynb containing the script to create and train the model
 * drive.py for driving the car in autonomous mode
 * model.h5 containing a trained convolution neural network 
 * writeup_report.md or writeup_report.pdf summarizing the results
@@ -48,7 +36,7 @@ python drive.py model.h5
 
 ####3. Submission code is usable and readable
 
-The model.py file contains the code for training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works.
+The train_car_to_drive.ipynb file contains the code for training and saving the convolution neural network. The file shows the pipeline I used for training and validating the model, and it contains comments to explain how the code works.
 
 ###Model Architecture and Training Strategy
 
@@ -117,70 +105,115 @@ Non-trainable params: 120
 
 ####2. Attempts to reduce overfitting in the model
 
-The model contains dropout layers in order to reduce overfitting (model.py lines 21). 
+The model contains dropout layers in order to reduce overfitting (ref dropout_1 and dropout_2 in figure above and train_car_to_drive.ipynb). 
 
-The model was trained and validated on different data sets to ensure that the model was not overfitting (code line 10-16). The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track.
+Partially related: Used also balancing of data sets in the generator, see sample_weight in generator function and snippet below
+```
+            sample_weight = sklearn.utils.class_weight.compute_sample_weight('balanced', y_train)
+	    ...
+            yield sklearn.utils.shuffle(X_train, y_train, sample_weight)
+
+```
+
+The model was tested by running it through the simulator and ensuring that the vehicle could stay on the track. See mp4 file in this github repository.
 
 ####3. Model parameter tuning
 
-The model used an adam optimizer, so the learning rate was not tuned manually (model.py line 25).
+The model used an adam optimizer, so the learning rate was not tuned manually
 
 ####4. Appropriate training data
 
-Training data was chosen to keep the vehicle driving on the road. I used a combination of center lane driving, recovering from the left and right sides of the road ... 
-
-For details about how I created the training data, see the next section. 
-
+Used the training data that was provided as part of the project, and in addition added two runs of data to avoid problems (e.g. curve without lane line on the right side - until the bridge started and also a separate training set driving on the bridge). Data is available on https://amundtveit.com/DATA0.tgz). 
 ###Model Architecture and Training Strategy
 
 ####1. Solution Design Approach
 
-The overall strategy for deriving a model architecture was to ...
+The overall strategy for deriving a model architecture was to use a conv.net, first tried the previous one I used for Traffic Sign detection based on LeNet, but it didn't work (probably too big images as input), and then started with the Nvidia model (see above for details about changes to it).
 
-My first step was to use a convolution neural network model similar to the ... I thought this model might be appropriate because ...
-
-In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. I found that my first model had a low mean squared error on the training set but a high mean squared error on the validation set. This implied that the model was overfitting. 
-
-To combat the overfitting, I modified the model so that ...
-
-Then I ... 
-
-The final step was to run the simulator to see how well the car was driving around track one. There were a few spots where the vehicle fell off the track... to improve the driving behavior in these cases, I ....
-
-At the end of the process, the vehicle is able to drive autonomously around the track without leaving the road.
+In order to gauge how well the model was working, I split my image and steering angle data into a training and validation set. Primary finding was that numerical performance of the models I tried was not a good predictor of how well it would it perform on actual driving in the simulator. Perhaps overfitting could be good for this task (i.e. memorize track), but I attempted to get a correctly trained model without overfitting (ref. dropout/selu and batch normalization). There were many failed runs before the car actually could drive around the first track.
 
 ####2. Final Model Architecture
 
-The final model architecture (model.py lines 18-24) consisted of a convolution neural network with the following layers and layer sizes ...
-
-Here is a visualization of the architecture (note: visualizing the architecture is optional according to the project rubric)
-
-![alt text][image1]
+See above for final architecture
 
 ####3. Creation of the Training Set & Training Process
 
-To capture good driving behavior, I first recorded two laps on track one using center lane driving. Here is an example image of center lane driving:
+I redrove and captured training data for the sections that were problematic (as mentioned the curve without lane lines on right and the bridge and part just before bridge). Regarding center-driving I didn't get much success adding data for that, but perhaps my rebalancing (ref. generator output above) actually was counter-productive?
 
-![alt text][image2]
+For each example line in the training data I generated 6 variants (for data augmentetation), i.e. flipped image (along center vertical axis) +  also used the 3 different cameras (left, center and right) with adjustments for the angle. 
 
-I then recorded the vehicle recovering from the left side and right sides of the road back to center so that the vehicle would learn to .... These images show what a recovery looks like starting from ... :
+After the collection process, I had 10485 lines in driving_log.csv, i.e. number of data points = 62430 (6*10485). Preprocessing used to flip image, convert images to numpy arrays and also (as part of Keras model) to scale values. Also did cropping of the image as part of the model. I finally randomly shuffled the data set and put 20 of the data into a validation set, see generator for details
 
-![alt text][image3]
-![alt text][image4]
-![alt text][image5]
+#### generator
+```
+# dealing with unbalanced data with class_weight in Keras
+# https://datascience.stackexchange.com/questions/13490/how-to-set-class-weights-for-imbalanced-classes-in-keras
 
-Then I repeated this process on track two in order to get more data points.
+import sklearn.utils.class_weight
 
-To augment the data sat, I also flipped images and angles thinking that this would ... For example, here is an image that has then been flipped:
+def generator(samples,batch_size=32, image_prefix_path="../DATA0/IMG/"):
+    num_samples = len(samples)
+    while 1: # Loop forever so the generator never terminates
+        random.shuffle(samples)
+        for offset in range(0, num_samples, batch_size):
+            batch_samples = samples[offset:offset+batch_size]
+            images = []
+            angles = []
+            angle_offsets = [0.0, 0.20, -0.20]
+            
+            for batch_sample in batch_samples:
+                center_angle = float(batch_sample[3])
 
-![alt text][image6]
-![alt text][image7]
+                for image_position in range(3):
+                    image_subpath = batch_sample[image_position].split('/')[-1]
+                    image_path = image_prefix_path + image_subpath
+                    image = cv2.imread(image_path)
+                    images.append(image)
+                    angle = center_angle + angle_offsets[image_position]
+                    angles.append(angle)
 
-Etc ....
+                    # also add flipped image and angle
+                    flipped_image = np.fliplr(image)
+                    flipped_angle_for_image = -angle
+                    images.append(flipped_image)
+                    angles.append(flipped_angle_for_image)
 
-After the collection process, I had X number of data points. I then preprocessed this data by ...
+            X_train = np.array(images)
+            y_train = np.array(angles)
+            sample_weight = sklearn.utils.class_weight.compute_sample_weight('balanced', y_train)
+            yield sklearn.utils.shuffle(X_train, y_train, sample_weight)
+```
 
+I used this training data for training the model. The validation helped determine if the model was over or under fitting. The ideal
+number of epochs was 5 as evidenced by the quick flattening of loss
+and validation loss (to around 0.03), in earlier runs validation loss
+increased above training loss when having more epochs.  I used an adam
+optimizer so that manually training the learning rate wasn't
+necessary.
 
-I finally randomly shuffled the data set and put Y% of the data into a validation set. 
+```
+Epoch 1/5
+178s - loss: 0.2916 - val_loss: 0.0603
+Epoch 2/5
+180s - loss: 0.0530 - val_loss: 0.0463
+Epoch 3/5
+181s - loss: 0.0398 - val_loss: 0.0330
+Epoch 4/5
+179s - loss: 0.0309 - val_loss: 0.0326
+Epoch 5/5
+178s - loss: 0.0302 - val_loss: 0.0312
+```
 
-I used this training data for training the model. The validation set helped determine if the model was over or under fitting. The ideal number of epochs was Z as evidenced by ... I used an adam optimizer so that manually training the learning rate wasn't necessary.
+####4. Challenges
+
+Challenges along the way - found it to be a very hard task, since the
+model loss and validation loss weren't good predictors for actual
+driving performance, also had cases when adding more training data
+with nice driving data (at the center and far from the edges) actually
+gave worse results and made the car drive off the road. Other
+challenges were Keras 2 related, the semantics of parameters in Keras
+1 and Keras 2 fooled me a bit using Keras 2, ref the
+steps_per_epoch. Also had issues with the progress bar not working in
+Keras 2 in Jupyter notebook, so had to use 3rd party library
+https://pypi.python.org/pypi/keras-tqdm/2.0.1
+
