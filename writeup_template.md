@@ -129,8 +129,9 @@ Used the training data that was provided as part of the project, and
 in addition added two runs of data to avoid problems (e.g. curve
 without lane line on the right side - until the bridge started and
 also a separate training set driving on the bridge). Data is available
-on https://amundtveit.com/DATA0.tgz).  ###Model Architecture and
-Training Strategy
+on https://amundtveit.com/DATA0.tgz).  
+
+###Model Architecture and Training Strategy
 
 ####1. Solution Design Approach
 
