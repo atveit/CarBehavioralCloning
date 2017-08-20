@@ -18,7 +18,7 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/placeholder.png "Model Visualization"
+[model]: model.png "Model Visualization"
 [image2]: ./examples/placeholder.png "Grayscaling"
 [image3]: ./examples/placeholder_small.png "Recovery Image"
 [image4]: ./examples/placeholder_small.png "Recovery Image"
@@ -54,9 +54,63 @@ The model.py file contains the code for training and saving the convolution neur
 
 ####1. An appropriate model architecture has been employed
 
-My model consists of a convolution neural network with 3x3 filter sizes and depths between 32 and 128 (model.py lines 18-24) 
+Used the NVIDIA Autopilot Deep Learning model for self-driving as inspiration (ref: paper "End to End Learning for Self-Driving Cars" - https://arxiv.org/abs/1604.07316 and implementation of it: https://github.com/0bserver07/Nvidia-Autopilot-Keras), but did some changes to it:
 
-The model includes RELU layers to introduce nonlinearity (code line 20), and the data is normalized in the model using a Keras lambda layer (code line 18). 
+1. Added normalization in the model itself (ref Lambda(lambda x: x/255.0 - 0.5, input_shape=img_input_shape)), since it is likely to be faster than doing it in pure Python.
+2. Added Max Pooling after the first convolution layers, i.e. making the model a more "traditional" conv.net wrt being capable of
+   detecting low level features such as edges (similar to classic networks such as LeNet). 
+3. Added Batch Normalization in early layers to be more robust wrt different learning rates
+4. Used he_normal normalization (truncated normal distribution) since this type of normalization with TensorFlow has earlier mattered a lot
+5. Used L2 regularizer (ref: "rule of thumb" - https://www.quora.com/What-is-the-difference-between-L1-and-L2-regularization-How-does-it-solve-the-problem-of-overfitting-Which-regularizer-to-use-and-when )
+6. Made the model (much) smaller by reducing the fully connected layers (got problems running larger model on 1070 card, but in retrospect it was not the model size but my misunderstandings of Keras 2 that caused this trouble)
+7. Used selu (ref: paper "Self-Normalizing Neural Networks" https://arxiv.org/abs/1706.02515) instead of relu as rectifier functions in later layers (fully connected) - since previous experience have shown (with traffic sign classification and tensorflow) showed that using selu gave faster convergence rates (though not better final result). 
+8. Used dropout in later layers to avoid overfitting
+9. Used l1 regularization on the final layer, since I've seen that it is good for regression problems (better than l2)
+
+![model Image][model]
+
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+lambda_1 (Lambda)            (None, 160, 320, 3)       0         
+_________________________________________________________________
+cropping2d_1 (Cropping2D)    (None, 85, 320, 3)        0         
+_________________________________________________________________
+conv2d_1 (Conv2D)            (None, 41, 158, 24)       1824      
+_________________________________________________________________
+batch_normalization_1 (Batch (None, 41, 158, 24)       96        
+_________________________________________________________________
+max_pooling2d_1 (MaxPooling2 (None, 21, 79, 24)        0         
+_________________________________________________________________
+conv2d_2 (Conv2D)            (None, 9, 38, 36)         21636     
+_________________________________________________________________
+batch_normalization_2 (Batch (None, 9, 38, 36)         144       
+_________________________________________________________________
+conv2d_3 (Conv2D)            (None, 3, 17, 48)         43248     
+_________________________________________________________________
+conv2d_4 (Conv2D)            (None, 1, 15, 64)         27712     
+_________________________________________________________________
+flatten_1 (Flatten)          (None, 960)               0         
+_________________________________________________________________
+dense_1 (Dense)              (None, 400)               384400    
+_________________________________________________________________
+dropout_1 (Dropout)          (None, 400)               0         
+_________________________________________________________________
+dense_2 (Dense)              (None, 100)               40100     
+_________________________________________________________________
+dropout_2 (Dropout)          (None, 100)               0         
+_________________________________________________________________
+dense_3 (Dense)              (None, 50)                5050      
+_________________________________________________________________
+dense_4 (Dense)              (None, 10)                510       
+_________________________________________________________________
+dense_5 (Dense)              (None, 1)                 11        
+=================================================================
+Total params: 524,731
+Trainable params: 524,611
+Non-trainable params: 120
+
+
 
 ####2. Attempts to reduce overfitting in the model
 
