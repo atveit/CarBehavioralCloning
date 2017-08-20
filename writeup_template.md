@@ -19,6 +19,10 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [model]: model.png "Model Visualization"
+[left]: left.jpg "Left camera"
+[center]: center.jpg "Center camera"
+[right]: right.jpg "Right camera"
+[flippedcenter]: flipped_center.jpg "Flipped center camera"
 
 ####1. Submission includes all required files and can be used to run the simulator in autonomous mode
 
@@ -149,7 +153,19 @@ I redrove and captured training data for the sections that were problematic (as 
 
 For each example line in the training data I generated 6 variants (for data augmentetation), i.e. flipped image (along center vertical axis) +  also used the 3 different cameras (left, center and right) with adjustments for the angle. 
 
-After the collection process, I had 10485 lines in driving_log.csv, i.e. number of data points = 62430 (6*10485). Preprocessing used to flip image, convert images to numpy arrays and also (as part of Keras model) to scale values. Also did cropping of the image as part of the model. I finally randomly shuffled the data set and put 20 of the data into a validation set, see generator for details
+After the collection process, I had 10485 lines in driving_log.csv, i.e. number of data points = 62430 (6*10485). Preprocessing used to flip image, convert images to numpy arrays and also (as part of Keras model) to scale values. Also did cropping of the image as part of the model. I finally randomly shuffled the data set and put 20 of the data into a validation set, see generator for details. Examples of images (before cropping inside model) is shown below:
+
+Example of center camera image 
+[center]
+
+Example of flipped center camera image 
+[flippedcenter]
+
+Example of left camera image
+[left]
+
+Example of right camera image 
+[right]
 
 #### generator
 ```
