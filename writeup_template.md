@@ -156,16 +156,16 @@ For each example line in the training data I generated 6 variants (for data augm
 After the collection process, I had 10485 lines in driving_log.csv, i.e. number of data points = 62430 (6*10485). Preprocessing used to flip image, convert images to numpy arrays and also (as part of Keras model) to scale values. Also did cropping of the image as part of the model. I finally randomly shuffled the data set and put 20 of the data into a validation set, see generator for details. Examples of images (before cropping inside model) is shown below:
 
 Example of center camera image 
-[center]
+![center Image][center]
 
 Example of flipped center camera image 
-[flippedcenter]
+![flippedcenter Image][flippedcenter]
 
 Example of left camera image
-[left]
+![left Image][left]
 
 Example of right camera image 
-[right]
+![right Image][right]
 
 #### generator
 ```
